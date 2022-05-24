@@ -18,7 +18,7 @@ function jwtVerified(req,res,next){
       return res.status(401).send({message: "UnAuthorization"})
     }
     const token=authorization.split(' ')[1]
-    jwt.verify(token, process.env.ACCESS_TOKEN, function(err, decoded){
+    jwt.verify(token, process.env.JWT_TOKEN, function(err, decoded){
      
       if(err){
         return res.status(403).send({message : "forbidden"})}
@@ -57,6 +57,23 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
             res.send(result)
             
         })
+
+        app.get('/users',jwtVerified,async(req,res)=>{
+            const result=await userCollection.find().toArray();
+            res.send(result)
+        })
+
+        app.put('/users/admin/:email',async(req,res)=>{
+            const email=req.params.email;
+            const filter={email:email};            
+            const updateDoc = {
+                $set:{role:'admin'},
+              };
+              const result=await userCollection.updateOne(filter,updateDoc)
+              res.send(result)
+        })
+
+
         app.put('/users/:email',async(req,res)=>{
             const email=req.params.email;
             const user=req.body;
@@ -66,7 +83,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
                 $set: user,
               };
               const result=await userCollection.updateOne(filter,updateDoc,options)
-              const token=jwt.sign({email:email},process.env.ACCESS_TOKEN,{ expiresIn: '1h' })
+              const token=jwt.sign({email:email},process.env.JWT_TOKEN,{ expiresIn: '1h' })
               res.send({result,token})
         })
 
