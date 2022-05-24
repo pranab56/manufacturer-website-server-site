@@ -12,7 +12,7 @@ app.use(express.json())
 
 
 
-function jwtVeryfied(req,res,next){
+function jwtVerified(req,res,next){
     const authorization=req.headers.authorization;
     if(!authorization){
       return res.status(401).send({message: "UnAuthorization"})
@@ -44,6 +44,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
          await client.connect()
         const productCollection = client.db("electrical").collection("product");
         const orderCollection = client.db("electrical").collection("order");
+        const userCollection = client.db("electrical").collection("users");
         app.get('/product',async(req,res)=>{
             const query={};
             const result=await productCollection.find(query).toArray();
@@ -56,8 +57,20 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
             res.send(result)
             
         })
+        app.put('/users/:email',async(req,res)=>{
+            const email=req.params.email;
+            const user=req.body;
+            const filter={email:email};
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+              };
+              const result=await userCollection.updateOne(filter,updateDoc,options)
+              const token=jwt.sign({email:email},process.env.ACCESS_TOKEN,{ expiresIn: '1h' })
+              res.send({result,token})
+        })
 
-        app.get('/order',async(req,res)=>{
+        app.get('/order',jwtVerified,async(req,res)=>{
             const email=req.query.email;
             const query={email : email};
             const order=await orderCollection.find(query).toArray()
