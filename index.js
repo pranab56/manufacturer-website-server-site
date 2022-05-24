@@ -18,7 +18,7 @@ function jwtVerified(req,res,next){
       return res.status(401).send({message: "UnAuthorization"})
     }
     const token=authorization.split(' ')[1]
-    jwt.verify(token, process.env.ACCESS_TOKEN, function(err, decoded) {
+    jwt.verify(token, process.env.ACCESS_TOKEN, function(err, decoded){
      
       if(err){
         return res.status(403).send({message : "forbidden"})}
@@ -72,9 +72,16 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
         app.get('/order',jwtVerified,async(req,res)=>{
             const email=req.query.email;
-            const query={email : email};
-            const order=await orderCollection.find(query).toArray()
-            res.send(order);
+            const decodedEmail=req.decoded.email;
+            if(email===decodedEmail){
+                const query={email : email};
+                const order=await orderCollection.find(query).toArray()
+               return res.send(order);
+            }
+            else{
+                return res.status(403).send({message:'forbidden'})
+            }
+         
         })
 
         app.post('/order',async(req,res)=>{
