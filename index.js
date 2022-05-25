@@ -45,6 +45,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
         const productCollection = client.db("electrical").collection("product");
         const orderCollection = client.db("electrical").collection("order");
         const userCollection = client.db("electrical").collection("users");
+        const profileCollection = client.db("electrical").collection("profile");
         app.get('/product',async(req,res)=>{
             const query={};
             const result=await productCollection.find(query).toArray();
@@ -56,6 +57,25 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
             const result=await productCollection.findOne(query);
             res.send(result)
             
+        })
+        app.post('/product',async(req,res)=>{
+            const product=req.body;
+            const result=await productCollection.insertOne(product);
+            res.send(result)
+        })
+
+        app.get('/profile',async(req,res)=>{
+           const query={};
+           const user=await profileCollection.findOne(query);
+           res.send(user);
+          
+        })
+
+        
+        app.post('/profile',async(req,res)=>{
+            const profile=req.body;
+            const result=await profileCollection.insertOne(profile);
+            res.send(result)
         })
 
         app.get('/users',jwtVerified,async(req,res)=>{
@@ -116,7 +136,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
          
         })
 
-        app.delete('/order/:email',jwtVerified, async(req,res)=>{
+        app.delete('/order/:email',  async(req,res)=>{
             const email=req.params.email;
             const filter={email:email}
             const result=await orderCollection.deleteOne(filter);
