@@ -63,10 +63,17 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
             res.send(result)
         })
 
+        app.get('/admin/:email',async(req,res)=>{
+            const email=req.params.email;
+            const user=await userCollection.findOne({email:email});
+            const isAdmin=user.role === 'admin';
+            res.send({admin : isAdmin})
+        })
+
         app.put('/users/admin/:email',jwtVerified,async(req,res)=>{
             const email=req.params.email;
             const check=req.decoded.email;
-            const checkAccount=await userCollection.findOne({check : email});
+            const checkAccount=await userCollection.findOne({email : check});
             if(checkAccount.role ==='admin'){
                 const filter={email:email};            
                 const updateDoc = {
@@ -107,6 +114,13 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
                 return res.status(403).send({message:'forbidden'})
             }
          
+        })
+
+        app.delete('/order/:email',jwtVerified, async(req,res)=>{
+            const email=req.params.email;
+            const filter={email:email}
+            const result=await orderCollection.deleteOne(filter);
+            res.send(result)
         })
 
         app.post('/order',async(req,res)=>{
