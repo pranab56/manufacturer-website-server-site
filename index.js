@@ -63,14 +63,22 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
             res.send(result)
         })
 
-        app.put('/users/admin/:email',async(req,res)=>{
+        app.put('/users/admin/:email',jwtVerified,async(req,res)=>{
             const email=req.params.email;
-            const filter={email:email};            
-            const updateDoc = {
-                $set:{role:'admin'},
-              };
-              const result=await userCollection.updateOne(filter,updateDoc)
-              res.send(result)
+            const check=req.decoded.email;
+            const checkAccount=await userCollection.findOne({check : email});
+            if(checkAccount.role ==='admin'){
+                const filter={email:email};            
+                const updateDoc = {
+                    $set:{role:'admin'},
+                  };
+                  const result=await userCollection.updateOne(filter,updateDoc)
+                  res.send(result)
+            }
+            else{
+                res.status(403).send({message:'forbidden'})
+            }
+            
         })
 
 
