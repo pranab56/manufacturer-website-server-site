@@ -198,14 +198,14 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
             const id=req.params.id;
             const payment=req.body;
             const filter={_id:ObjectId(id)}
-            const updateDoc={
+            const updatedDoc={
                 $set:{
                     paid:true,
                     transactionId:payment.transactionId
                 }
             }
             const result=await paymentCollection.insertOne(payment);
-            const updatedOrder=await orderCollection.updateOne(filter,updateDoc);
+            const updatedOrder=await orderCollection.updateOne(filter,updatedDoc);
             res.send(updatedOrder);
         })
 
