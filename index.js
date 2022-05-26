@@ -45,6 +45,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
          await client.connect()
         const productCollection = client.db("electrical").collection("product");
         const orderCollection = client.db("electrical").collection("order");
+        const paymentCollection = client.db("electrical").collection("payments");
         const userCollection = client.db("electrical").collection("users");
         const profileCollection = client.db("electrical").collection("profile");
         const reviewCollection = client.db("electrical").collection("review");
@@ -78,12 +79,8 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
             res.send(userReview);
         })
 
-        app.get('/profile',async(req,res)=>{
-           const query={};
-           const user=await profileCollection.findOne(query);
-           res.send(user);
-          
-        })
+
+       
 
         
         app.post('/profile',async(req,res)=>{
@@ -157,6 +154,26 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
         res.send(result)
       })
 
+
+
+      app.get('/profile',jwtVerified, async(req,res)=>{
+        const email=req.query.email;
+       const decodedEmail=req.decoded.email;
+       if(email===decodedEmail){
+        const query={email : email}
+        const user=await profileCollection.findOne(query);
+        res.send(user);
+       }
+       else{
+           return res.status(403).send({message:"forbidden"})
+       }
+     
+      
+    })
+
+
+
+
         app.get('/order',jwtVerified,async(req,res)=>{
             const email=req.query.email;
             const decodedEmail=req.decoded.email;
@@ -171,8 +188,19 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
          
         })
 
-
-
+        app.patch('/order/:id',jwtVerified,async(req,res)=>{
+            const id=req.params.id;
+            const payment=req.body;
+            const filter={_id:ObjectId(id)}
+            const updateDoc={
+                $set:{
+                    paid:true,
+                    transactionId:payment.transactionId
+                }
+            }
+            const updatedOrder=await orderCollection.updateOne(filter,updateDoc);
+            
+        })
 
 
 
