@@ -120,7 +120,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
         });
 
 
-        app.post('/createPaymentIntent', jwtVerified, async(req, res) =>{
+        app.post('/create-Payment-Intent', jwtVerified, async(req, res) =>{
             const order = req.body;
             const price = order.price;
             const amount = price*100;
