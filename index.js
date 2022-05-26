@@ -4,6 +4,7 @@ const cors=require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
+const stripe=require('stripe')(process.env.STRIPE_TOKEN_KEY);
 const port=process.env.PORT || 5000;
 
 
@@ -46,6 +47,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
         const orderCollection = client.db("electrical").collection("order");
         const userCollection = client.db("electrical").collection("users");
         const profileCollection = client.db("electrical").collection("profile");
+        const reviewCollection = client.db("electrical").collection("review");
         app.get('/product',async(req,res)=>{
             const query={};
             const result=await productCollection.find(query).toArray();
@@ -62,6 +64,18 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
             const product=req.body;
             const result=await productCollection.insertOne(product);
             res.send(result)
+        })
+
+        app.get('/review',async(req,res)=>{
+            const query={};
+            const review=await reviewCollection.find(query).toArray();
+            res.send(review);
+        })
+
+        app.post('/review',async(req,res)=>{
+            const review=req.body;
+            const userReview=await reviewCollection.insertOne(review);
+            res.send(userReview);
         })
 
         app.get('/profile',async(req,res)=>{
@@ -106,7 +120,21 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
                 res.status(403).send({message:'forbidden'})
             }
             
-        })
+        });
+
+
+        app.post('/createPaymentIntent', jwtVerified, async(req, res) =>{
+            const order = req.body;
+            const price = order.price;
+            const amount = price*100;
+            const paymentIntent = await stripe.paymentIntents.create({
+              amount : amount,
+              currency: 'usd',
+              payment_method_types:['card']
+            });
+            res.send({clientSecret:paymentIntent.client_secret})
+          });
+             
 
 
         app.put('/users/:email',async(req,res)=>{
@@ -122,6 +150,13 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
               res.send({result,token})
         })
 
+      app.get('/order/:id',jwtVerified, async(req,res)=>{
+        const id=req.params.id;
+        const query={_id:ObjectId(id)};
+        const result=await orderCollection.findOne(query);
+        res.send(result)
+      })
+
         app.get('/order',jwtVerified,async(req,res)=>{
             const email=req.query.email;
             const decodedEmail=req.decoded.email;
@@ -136,6 +171,13 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
          
         })
 
+
+
+
+
+
+
+
         app.delete('/order/:email',  async(req,res)=>{
             const email=req.params.email;
             const filter={email:email}
@@ -149,8 +191,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
             res.send(result)
         })
     
-              
-             
+        
              
         
 
