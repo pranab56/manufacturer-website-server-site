@@ -154,6 +154,12 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
         res.send(result)
       })
 
+      app.get('/order',jwtVerified,async(req,res)=>{
+          const query={};
+          const result=await orderCollection.find(query).toArray();
+          res.send(result)
+      })
+
 
 
       app.get('/profile',jwtVerified, async(req,res)=>{
@@ -198,8 +204,9 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
                     transactionId:payment.transactionId
                 }
             }
+            const result=await paymentCollection.insertOne(payment);
             const updatedOrder=await orderCollection.updateOne(filter,updateDoc);
-            
+            res.send(updatedOrder);
         })
 
 
